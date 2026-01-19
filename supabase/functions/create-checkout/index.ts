@@ -6,8 +6,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
-// PLACEHOLDER - Replace with your actual Stripe secret key
-const STRIPE_SECRET_KEY = "STRIPE_SECRET_KEY";
+const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
