@@ -1,12 +1,10 @@
-import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import Stripe from "https://esm.sh/stripe@14.21.0";
+import { serve } from "https://deno.land/std@0.190.0/http/server.ts";
+import Stripe from "https://esm.sh/stripe@18.5.0";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
-
-const STRIPE_SECRET_KEY = Deno.env.get("STRIPE_SECRET_KEY");
 
 serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -16,8 +14,8 @@ serve(async (req) => {
   try {
     const { planId, planName, planPrice, addOnPrice, email, name, duration } = await req.json();
 
-    const stripe = new Stripe(STRIPE_SECRET_KEY, {
-      apiVersion: "2023-10-16",
+    const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
+      apiVersion: "2025-08-27.basil",
     });
 
     // Create or get customer
@@ -80,6 +78,8 @@ serve(async (req) => {
         addOnIncluded: addOnPrice > 0 ? "true" : "false",
       },
     });
+
+    console.log("Checkout session created successfully:", session.id);
 
     return new Response(JSON.stringify({ url: session.url }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
