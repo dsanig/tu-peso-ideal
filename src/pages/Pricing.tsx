@@ -11,11 +11,11 @@ import { toast } from "sonner";
 
 const plans = [
   {
-    id: "7d",
+    id: "prueba", // Matches Stripe price_id mapping
     name: "Prueba",
-    price: 9,
+    price: 9.99,
     duration: "7 días",
-    durationMonths: 0, // Less than 1 month, no add-on multiplier
+    durationMonths: 1, // 1 month of add-on for 7-day trial
     description: "Ideal para probar el sistema",
     features: [
       "Acceso completo al plan personalizado",
@@ -27,9 +27,9 @@ const plans = [
     popular: false,
   },
   {
-    id: "1m",
+    id: "mensual", // Matches Stripe price_id mapping
     name: "Mensual",
-    price: 19,
+    price: 29.99,
     duration: "1 mes",
     durationMonths: 1,
     description: "Nuestro plan más popular",
@@ -43,9 +43,9 @@ const plans = [
     popular: true,
   },
   {
-    id: "3m",
+    id: "trimestral", // Matches Stripe price_id mapping
     name: "Trimestral",
-    price: 39,
+    price: 74.99,
     duration: "3 meses",
     durationMonths: 3,
     description: "Mejor valor para resultados duraderos",
@@ -80,8 +80,7 @@ export default function Pricing() {
   // Calculate add-on price based on plan duration (€25 per month)
   const addOnPrice = useMemo(() => {
     if (!selectedPlan) return 0;
-    // For 7-day plan, charge 1 month of add-on
-    return selectedPlan.durationMonths === 0 ? ADD_ON_BASE_PRICE : ADD_ON_BASE_PRICE * selectedPlan.durationMonths;
+    return ADD_ON_BASE_PRICE * selectedPlan.durationMonths;
   }, [selectedPlan]);
   
   const totalPrice = selectedPlan ? selectedPlan.price + (addOnSelected ? addOnPrice : 0) : 0;
@@ -151,11 +150,11 @@ export default function Pricing() {
         body: {
           planId: selectedPlan.id,
           planName: selectedPlan.name,
-          planPrice: selectedPlan.price,
-          addOnPrice: addOnSelected ? addOnPrice : 0,
           email,
           name,
           duration: selectedPlan.duration,
+          includeAddOn: addOnSelected,
+          addOnQuantity: selectedPlan.durationMonths,
         },
       });
 

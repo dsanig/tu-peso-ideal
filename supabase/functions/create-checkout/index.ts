@@ -6,17 +6,32 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
 };
 
+// Mapping de planes a price_id de Stripe
+const PRICE_IDS: Record<string, string> = {
+  prueba: "price_1SrjKcFd344hbed92UIuINVx",      // Plan Prueba 7 días - 9.99€
+  mensual: "price_1SrjQ9Fd344hbed9ViNx2Vfs",     // Plan Mensual - 29.99€
+  trimestral: "price_1SrjVIFd344hbed9EurXiI1B",  // Plan Trimestral - 74.99€
+};
+
+const ADDON_PRICE_ID = "price_1SrjWUFd344hbed9eCKQY7Em"; // Seguimiento Inteligente - 25€/mes
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
 
   try {
-    const { planId, planName, planPrice, addOnPrice, email, name, duration } = await req.json();
+    const { planId, planName, email, name, duration, includeAddOn, addOnQuantity } = await req.json();
 
     const stripe = new Stripe(Deno.env.get("STRIPE_SECRET_KEY") || "", {
       apiVersion: "2025-08-27.basil",
     });
+
+    // Validate planId
+    const priceId = PRICE_IDS[planId];
+    if (!priceId) {
+      throw new Error(`Invalid plan ID: ${planId}`);
+    }
 
     // Create or get customer
     const customers = await stripe.customers.list({ email, limit: 1 });
@@ -33,32 +48,20 @@ serve(async (req) => {
       customerId = customer.id;
     }
 
-    // Build line items
+    // Build line items using price_id
     const lineItems: Stripe.Checkout.SessionCreateParams.LineItem[] = [
       {
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: `Plan ${planName}`,
-            description: `Acceso durante ${duration}`,
-          },
-          unit_amount: Math.round(planPrice * 100),
-        },
+        price: priceId,
         quantity: 1,
       },
     ];
 
-    if (addOnPrice > 0) {
+    // Add addon if included (quantity based on duration: 1 for prueba/mensual, 3 for trimestral)
+    if (includeAddOn) {
+      const quantity = addOnQuantity || (planId === "trimestral" ? 3 : 1);
       lineItems.push({
-        price_data: {
-          currency: "eur",
-          product_data: {
-            name: "Seguimiento Inteligente",
-            description: `Add-on premium para ${duration}`,
-          },
-          unit_amount: Math.round(addOnPrice * 100),
-        },
-        quantity: 1,
+        price: ADDON_PRICE_ID,
+        quantity: quantity,
       });
     }
 
@@ -75,7 +78,7 @@ serve(async (req) => {
         duration,
         email,
         name,
-        addOnIncluded: addOnPrice > 0 ? "true" : "false",
+        addOnIncluded: includeAddOn ? "true" : "false",
       },
     });
 
