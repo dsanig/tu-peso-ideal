@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Check, Star, Zap, ArrowRight, Mail, UserRound, Loader2, Tag, Heart } from "lucide-react";
-import { useMemo, useRef, useState } from "react";
+import { Check, Star, Zap, ArrowRight, Mail, UserRound, Loader2, Tag, Heart, Lock } from "lucide-react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -68,12 +68,26 @@ export default function Pricing() {
   const [addOnSelected, setAddOnSelected] = useState(false);
   const [vagusSelected, setVagusSelected] = useState(false);
   const [checkoutStep, setCheckoutStep] = useState<"idle" | "email" | "account" | "checkout">("idle");
+  const [isLoginMode, setIsLoginMode] = useState(false);
   const [email, setEmail] = useState("");
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [promoCode, setPromoCode] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const summaryRef = useRef<HTMLDivElement | null>(null);
+
+  // Check if user is already logged in
+  useEffect(() => {
+    const checkSession = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user) {
+        setEmail(session.user.email || "");
+        setName(session.user.user_metadata?.full_name || "");
+        setCheckoutStep("checkout");
+      }
+    };
+    checkSession();
+  }, []);
 
   const selectedPlan = useMemo(
     () => plans.find((plan) => plan.id === selectedPlanId) ?? null,
@@ -126,7 +140,6 @@ export default function Pricing() {
   const handleCreateAccount = async () => {
     if (!email || !name || !selectedPlan) return;
     
-    // Validate password length
     if (!password || password.length < 6) {
       toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
@@ -134,7 +147,6 @@ export default function Pricing() {
     
     setIsLoading(true);
     try {
-      // Create Supabase account
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
@@ -146,7 +158,8 @@ export default function Pricing() {
 
       if (error) {
         if (error.message.includes("User already registered")) {
-          toast.error("Este email ya está registrado. Prueba a iniciar sesión.");
+          setIsLoginMode(true);
+          toast.info("Este email ya está registrado. Introduce tu contraseña para iniciar sesión y continuar con la compra.");
           return;
         }
         if (error.message.includes("weak_password") || error.message.includes("Password")) {
@@ -160,7 +173,6 @@ export default function Pricing() {
         throw error;
       }
 
-      // Save test answers to DB immediately after account creation
       if (signUpData?.user?.id) {
         await saveTestAnswersToDb(signUpData.user.id);
       }
@@ -170,6 +182,41 @@ export default function Pricing() {
     } catch (error) {
       console.error("Error creating account:", error);
       toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Contraseña incorrecta. Inténtalo de nuevo.");
+        } else {
+          toast.error(error.message || "Error al iniciar sesión");
+        }
+        return;
+      }
+
+      if (data.user) {
+        setName(data.user.user_metadata?.full_name || name);
+        await saveTestAnswersToDb(data.user.id);
+      }
+
+      setCheckoutStep("checkout");
+      setIsLoginMode(false);
+      toast.success("¡Sesión iniciada! Continúa con tu compra.");
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast.error("Error al iniciar sesión. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
@@ -511,47 +558,107 @@ export default function Pricing() {
                 <div className="grid gap-4 rounded-lg border border-border bg-background p-4">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <UserRound className="w-4 h-4" />
-                    <span>Crea tu cuenta</span>
+                    <span>{isLoginMode ? "Inicia sesión para continuar" : "Crea tu cuenta"}</span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="checkout-name">Nombre</Label>
-                      <Input 
-                        id="checkout-name" 
-                        type="text" 
-                        placeholder="María López"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="checkout-password">Contraseña</Label>
-                      <Input 
-                        id="checkout-password" 
-                        type="password" 
-                        placeholder="Mínimo 6 caracteres"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={6}
-                      />
-                      <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={handleCreateAccount}
-                      disabled={!name || !password || isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creando cuenta...
-                        </>
-                      ) : (
-                        "Crear cuenta"
-                      )}
-                    </Button>
-                  </div>
+                  
+                  {isLoginMode ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Ya tienes una cuenta con <strong>{email}</strong>. Introduce tu contraseña para continuar con la compra.
+                      </p>
+                      <div className="grid gap-2">
+                        <Label htmlFor="checkout-login-password">Contraseña</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input 
+                            id="checkout-login-password" 
+                            type="password" 
+                            placeholder="Tu contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsLoginMode(false);
+                            setPassword("");
+                          }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Crear cuenta nueva
+                        </button>
+                        <Button 
+                          onClick={handleLogin}
+                          disabled={!password || isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Iniciando sesión...
+                            </>
+                          ) : (
+                            "Iniciar sesión y continuar"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="checkout-name">Nombre</Label>
+                          <Input 
+                            id="checkout-name" 
+                            type="text" 
+                            placeholder="María López"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="checkout-password">Contraseña</Label>
+                          <Input 
+                            id="checkout-password" 
+                            type="password" 
+                            placeholder="Mínimo 6 caracteres"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            minLength={6}
+                          />
+                          <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsLoginMode(true);
+                            setPassword("");
+                          }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          ¿Ya tienes cuenta? Inicia sesión
+                        </button>
+                        <Button 
+                          onClick={handleCreateAccount}
+                          disabled={!name || !password || isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Creando cuenta...
+                            </>
+                          ) : (
+                            "Crear cuenta"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
