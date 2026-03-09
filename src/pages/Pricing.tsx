@@ -558,47 +558,107 @@ export default function Pricing() {
                 <div className="grid gap-4 rounded-lg border border-border bg-background p-4">
                   <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                     <UserRound className="w-4 h-4" />
-                    <span>Crea tu cuenta</span>
+                    <span>{isLoginMode ? "Inicia sesión para continuar" : "Crea tu cuenta"}</span>
                   </div>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="grid gap-2">
-                      <Label htmlFor="checkout-name">Nombre</Label>
-                      <Input 
-                        id="checkout-name" 
-                        type="text" 
-                        placeholder="María López"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                      />
-                    </div>
-                    <div className="grid gap-2">
-                      <Label htmlFor="checkout-password">Contraseña</Label>
-                      <Input 
-                        id="checkout-password" 
-                        type="password" 
-                        placeholder="Mínimo 6 caracteres"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        minLength={6}
-                      />
-                      <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
-                    </div>
-                  </div>
-                  <div className="flex justify-end">
-                    <Button 
-                      onClick={handleCreateAccount}
-                      disabled={!name || !password || isLoading}
-                    >
-                      {isLoading ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Creando cuenta...
-                        </>
-                      ) : (
-                        "Crear cuenta"
-                      )}
-                    </Button>
-                  </div>
+                  
+                  {isLoginMode ? (
+                    <>
+                      <p className="text-sm text-muted-foreground">
+                        Ya tienes una cuenta con <strong>{email}</strong>. Introduce tu contraseña para continuar con la compra.
+                      </p>
+                      <div className="grid gap-2">
+                        <Label htmlFor="checkout-login-password">Contraseña</Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                          <Input 
+                            id="checkout-login-password" 
+                            type="password" 
+                            placeholder="Tu contraseña"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsLoginMode(false);
+                            setPassword("");
+                          }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Crear cuenta nueva
+                        </button>
+                        <Button 
+                          onClick={handleLogin}
+                          disabled={!password || isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Iniciando sesión...
+                            </>
+                          ) : (
+                            "Iniciar sesión y continuar"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      <div className="grid gap-3 sm:grid-cols-2">
+                        <div className="grid gap-2">
+                          <Label htmlFor="checkout-name">Nombre</Label>
+                          <Input 
+                            id="checkout-name" 
+                            type="text" 
+                            placeholder="María López"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                          />
+                        </div>
+                        <div className="grid gap-2">
+                          <Label htmlFor="checkout-password">Contraseña</Label>
+                          <Input 
+                            id="checkout-password" 
+                            type="password" 
+                            placeholder="Mínimo 6 caracteres"
+                            value={password}
+                            onChange={(e) => setPassword(e.target.value)}
+                            minLength={6}
+                          />
+                          <p className="text-xs text-muted-foreground">Mínimo 6 caracteres</p>
+                        </div>
+                      </div>
+                      <div className="flex items-center justify-between">
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setIsLoginMode(true);
+                            setPassword("");
+                          }}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          ¿Ya tienes cuenta? Inicia sesión
+                        </button>
+                        <Button 
+                          onClick={handleCreateAccount}
+                          disabled={!name || !password || isLoading}
+                        >
+                          {isLoading ? (
+                            <>
+                              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                              Creando cuenta...
+                            </>
+                          ) : (
+                            "Crear cuenta"
+                          )}
+                        </Button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
 
