@@ -140,7 +140,6 @@ export default function Pricing() {
   const handleCreateAccount = async () => {
     if (!email || !name || !selectedPlan) return;
     
-    // Validate password length
     if (!password || password.length < 6) {
       toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
@@ -148,7 +147,6 @@ export default function Pricing() {
     
     setIsLoading(true);
     try {
-      // Create Supabase account
       const { data: signUpData, error } = await supabase.auth.signUp({
         email,
         password,
@@ -160,7 +158,8 @@ export default function Pricing() {
 
       if (error) {
         if (error.message.includes("User already registered")) {
-          toast.error("Este email ya está registrado. Prueba a iniciar sesión.");
+          setIsLoginMode(true);
+          toast.info("Este email ya está registrado. Introduce tu contraseña para iniciar sesión y continuar con la compra.");
           return;
         }
         if (error.message.includes("weak_password") || error.message.includes("Password")) {
@@ -174,7 +173,6 @@ export default function Pricing() {
         throw error;
       }
 
-      // Save test answers to DB immediately after account creation
       if (signUpData?.user?.id) {
         await saveTestAnswersToDb(signUpData.user.id);
       }
@@ -184,6 +182,41 @@ export default function Pricing() {
     } catch (error) {
       console.error("Error creating account:", error);
       toast.error("Error al crear la cuenta. Inténtalo de nuevo.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async () => {
+    if (!email || !password) return;
+    
+    setIsLoading(true);
+    try {
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+
+      if (error) {
+        if (error.message.includes("Invalid login credentials")) {
+          toast.error("Contraseña incorrecta. Inténtalo de nuevo.");
+        } else {
+          toast.error(error.message || "Error al iniciar sesión");
+        }
+        return;
+      }
+
+      if (data.user) {
+        setName(data.user.user_metadata?.full_name || name);
+        await saveTestAnswersToDb(data.user.id);
+      }
+
+      setCheckoutStep("checkout");
+      setIsLoginMode(false);
+      toast.success("¡Sesión iniciada! Continúa con tu compra.");
+    } catch (error) {
+      console.error("Error logging in:", error);
+      toast.error("Error al iniciar sesión. Inténtalo de nuevo.");
     } finally {
       setIsLoading(false);
     }
