@@ -79,18 +79,16 @@ export default function Test() {
   const [currentQuestion, setCurrentQuestion] = useState(0);
   const [answers, setAnswers] = useState<Record<number, Answer>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasTrackedStart, setHasTrackedStart] = useState(false);
 
   const question = questions[currentQuestion];
   const currentAnswer = answers[question.id];
   const isLastQuestion = currentQuestion === questions.length - 1;
 
-  // Track test_started on first answer
-  const hasTrackedStart = useState(false);
-
   const handleAnswer = (value: Answer) => {
-    if (!hasTrackedStart[0]) {
+    if (!hasTrackedStart) {
       trackFunnelEvent("test_started");
-      hasTrackedStart[1](true);
+      setHasTrackedStart(true);
     }
     setAnswers((prev) => ({
       ...prev,
