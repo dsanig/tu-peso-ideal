@@ -53,7 +53,7 @@ export default function AdminFunnel() {
       .limit(1000);
 
     if (!error && data) {
-      setEvents(data as FunnelEvent[]);
+      setEvents(data as unknown as FunnelEvent[]);
     }
     setLoading(false);
   };
