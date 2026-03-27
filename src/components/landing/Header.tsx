@@ -1,8 +1,9 @@
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Scale, Menu, X, User, LogOut, LayoutDashboard } from "lucide-react";
+import { Scale, Menu, X, User, LogOut, LayoutDashboard, Shield } from "lucide-react";
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useUserRole } from "@/hooks/useUserRole";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,6 +16,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [user, setUser] = useState<{ email: string; fullName: string | null } | null>(null);
+  const { isAdmin } = useUserRole();
   const navigate = useNavigate();
 
   const scrollToSection = (id: string) => {
@@ -114,6 +116,12 @@ export function Header() {
                     <LayoutDashboard className="w-4 h-4 mr-2" />
                     Mi cuenta
                   </DropdownMenuItem>
+                  {isAdmin && (
+                    <DropdownMenuItem onClick={() => navigate("/admin")}>
+                      <Shield className="w-4 h-4 mr-2" />
+                      Administración
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuSeparator />
                   <DropdownMenuItem onClick={handleLogout} className="text-destructive">
                     <LogOut className="w-4 h-4 mr-2" />
