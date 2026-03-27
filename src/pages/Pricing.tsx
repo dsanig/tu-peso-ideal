@@ -77,6 +77,11 @@ export default function Pricing() {
   const [isLoading, setIsLoading] = useState(false);
   const summaryRef = useRef<HTMLDivElement | null>(null);
 
+  // Track pricing page view
+  useEffect(() => {
+    trackFunnelEvent("pricing_viewed");
+  }, []);
+
   // Check if user is already logged in
   useEffect(() => {
     const checkSession = async () => {
@@ -179,6 +184,7 @@ export default function Pricing() {
       }
       
       setCheckoutStep("checkout");
+      trackFunnelEvent("account_created", { plan: selectedPlan.id });
       toast.success("Cuenta creada correctamente");
     } catch (error) {
       console.error("Error creating account:", error);
@@ -234,6 +240,7 @@ export default function Pricing() {
         await saveTestAnswersToDb(session.user.id);
       }
 
+      trackFunnelEvent("checkout_started", { plan: selectedPlan.id });
       const { data, error } = await supabase.functions.invoke("create-checkout", {
         body: {
           planId: selectedPlan.id,
