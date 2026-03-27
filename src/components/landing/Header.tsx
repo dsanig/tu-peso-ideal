@@ -82,7 +82,7 @@ export function Header() {
             <div className="w-9 h-9 rounded-xl gradient-primary flex items-center justify-center">
               <Scale className="w-5 h-5 text-primary-foreground" />
             </div>
-            <span className="text-lg font-bold text-foreground">NutriFit</span>
+            <span className="text-lg font-bold text-foreground">NutriFit <em className="font-normal text-sm text-muted-foreground">By INMEDSA</em></span>
           </Link>
 
           {/* Desktop Navigation */}

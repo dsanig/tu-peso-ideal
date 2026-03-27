@@ -12,14 +12,14 @@ export function Footer() {
               <div className="w-10 h-10 rounded-xl gradient-primary flex items-center justify-center">
                 <Scale className="w-5 h-5 text-primary-foreground" />
               </div>
-              <span className="text-xl font-bold text-foreground">NutriFit</span>
+              <span className="text-xl font-bold text-foreground">NutriFit <em className="font-normal text-base text-muted-foreground">By INMEDSA</em></span>
             </Link>
             <p className="text-muted-foreground text-sm max-w-sm mb-4">
               Herramienta educativa de bienestar para identificar hábitos y patrones 
               que afectan la pérdida de peso. No sustituye el consejo médico profesional.
             </p>
             <p className="text-xs text-muted-foreground">
-              © {new Date().getFullYear()} NutriFit. Todos los derechos reservados.
+              © {new Date().getFullYear()} NutriFit <em>By INMEDSA</em>. Todos los derechos reservados.
             </p>
           </div>
 
