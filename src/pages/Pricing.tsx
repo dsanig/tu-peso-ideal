@@ -442,7 +442,7 @@ export default function Pricing() {
 
                   <div className="flex items-center justify-between">
                     <div>
-                      <span className="text-2xl font-bold text-foreground">25€</span>
+                      <span className="text-2xl font-bold text-foreground">9,99€</span>
                       <span className="text-muted-foreground">/mes</span>
                       {selectedPlan && selectedPlan.durationMonths > 1 && (
                         <span className="block text-sm text-muted-foreground">
